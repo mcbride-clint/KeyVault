@@ -1,0 +1,68 @@
+@page
+@model KeyVaultService.Pages.IndexModel
+@{
+    ViewData["Title"]      = "Dashboard";
+    ViewData["ActivePage"] = "Dashboard";
+}
+
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-label">Active Secrets</div>
+        <div class="stat-value">@Model.SecretCount</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Access Grants</div>
+        <div class="stat-value">@Model.GrantCount</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">API Keys</div>
+        <div class="stat-value">@Model.ApiKeyCount</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Audit Events (24h)</div>
+        <div class="stat-value">@Model.RecentAuditCount</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">Recent Activity</div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>Principal</th>
+                <th>Action</th>
+                <th>Secret</th>
+                <th>Detail</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var log in Model.RecentLogs)
+            {
+                <tr>
+                    <td class="text-mono text-dim" style="font-size:12px">@log.Timestamp.ToString("MM-dd HH:mm:ss")</td>
+                    <td class="text-mono" style="font-size:12px">@log.Principal</td>
+                    <td>
+                        <span class="badge @BadgeClass(log.Action)">@log.Action</span>
+                    </td>
+                    <td class="text-dim">@(log.Secret?.Name ?? (log.SecretId.HasValue ? $"#{log.SecretId}" : "—"))</td>
+                    <td class="text-dim" style="font-size:12px">@log.Detail</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@functions {
+    string BadgeClass(string action) => action switch {
+        "READ"          => "badge-blue",
+        "CREATE"        => "badge-green",
+        "UPDATE"        => "badge-yellow",
+        "DELETE"        => "badge-red",
+        "GRANT"         => "badge-green",
+        "REVOKE"        => "badge-red",
+        "APIKEY_CREATE" => "badge-green",
+        "APIKEY_REVOKE" => "badge-red",
+        _               => "badge-dim"
+    };
+}

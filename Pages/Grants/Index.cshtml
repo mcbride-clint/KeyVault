@@ -1,0 +1,133 @@
+@page
+@model KeyVaultService.Pages.Grants.IndexModel
+@{
+    ViewData["Title"]      = "Access Grants" + (Model.SelectedSecret != null ? $" – {Model.SelectedSecret.Name}" : "");
+    ViewData["ActivePage"] = "Grants";
+}
+
+@if (Model.SelectedSecret != null)
+{
+    <div class="flex-row" style="margin-bottom:20px">
+        <a asp-page="/Grants/Index" class="btn btn-secondary btn-sm">← All Secrets</a>
+        <span class="text-mono" style="color:var(--accent)">@Model.SelectedSecret.Name</span>
+        <span class="badge @TypeBadge(Model.SelectedSecret.Type)">@Model.SelectedSecret.Type</span>
+        <div class="spacer"></div>
+        <button class="btn btn-primary" onclick="openModal('addModal')">+ Add Grant</button>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><span>Grants (@Model.Grants.Count())</span></div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Principal Type</th>
+                    <th>Principal</th>
+                    <th>Can Read</th>
+                    <th>Can Admin</th>
+                    <th>Granted By</th>
+                    <th>Granted At</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var g in Model.Grants)
+                {
+                    <tr>
+                        <td><span class="badge @PrincipalBadge(g.PrincipalType)">@g.PrincipalType</span></td>
+                        <td class="text-mono">@g.PrincipalValue</td>
+                        <td>@(g.CanRead  ? "✓" : "–")</td>
+                        <td>@(g.CanAdmin ? "✓" : "–")</td>
+                        <td class="text-dim" style="font-size:12px">@g.GrantedBy</td>
+                        <td class="text-mono text-dim" style="font-size:12px">@g.GrantedAt.ToString("yyyy-MM-dd")</td>
+                        <td>
+                            <form method="post" asp-page-handler="Revoke" style="display:inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="grantId" value="@g.Id" />
+                                <input type="hidden" name="secretId" value="@Model.SelectedSecret.Id" />
+                                <button type="submit" class="btn btn-danger btn-sm"
+                                        onclick="return confirm('Revoke this grant?')">Revoke</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Add Grant Modal -->
+    <div class="modal-overlay" id="addModal">
+        <div class="modal">
+            <div class="modal-title">Add Grant – @Model.SelectedSecret.Name</div>
+            <form method="post" asp-page-handler="Add">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="secretId" value="@Model.SelectedSecret.Id" />
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Principal Type</label>
+                        <select name="principalType" class="form-control">
+                            @foreach (var pt in Enum.GetNames<KeyVaultService.Models.PrincipalType>())
+                            {
+                                <option value="@pt">@pt</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Principal Value</label>
+                        <input name="principalValue" class="form-control form-control-mono"
+                               placeholder="DOMAIN\user  –or–  GroupName  –or–  ApiKeyId" required />
+                    </div>
+                    <div class="flex-row" style="gap:24px">
+                        <label class="flex-row" style="gap:8px;cursor:pointer">
+                            <input type="checkbox" name="canRead" value="true" checked /> Can Read
+                        </label>
+                        <label class="flex-row" style="gap:8px;cursor:pointer">
+                            <input type="checkbox" name="canAdmin" value="true" /> Can Admin
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Grant</button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+else
+{
+    <!-- Secret picker when no secretId is in query string -->
+    <div class="card">
+        <div class="card-header">Select a secret to manage grants</div>
+        <table class="data-table">
+            <thead>
+                <tr><th>Secret</th><th>Type</th><th>Grants</th><th></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var s in Model.AllSecrets)
+                {
+                    <tr>
+                        <td class="text-mono">@s.Name</td>
+                        <td><span class="badge @TypeBadge(s.Type)">@s.Type</span></td>
+                        <td class="text-mono">@s.Grants.Count</td>
+                        <td><a asp-page="/Grants/Index" asp-route-secretId="@s.Id" class="btn btn-secondary btn-sm">Manage</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@functions {
+    string TypeBadge(KeyVaultService.Models.SecretType t) => t switch {
+        KeyVaultService.Models.SecretType.Password         => "badge-red",
+        KeyVaultService.Models.SecretType.ConnectionString => "badge-blue",
+        KeyVaultService.Models.SecretType.ApiKey           => "badge-yellow",
+        _                                                  => "badge-dim"
+    };
+    string PrincipalBadge(KeyVaultService.Models.PrincipalType p) => p switch {
+        KeyVaultService.Models.PrincipalType.WindowsUser  => "badge-blue",
+        KeyVaultService.Models.PrincipalType.WindowsGroup => "badge-green",
+        KeyVaultService.Models.PrincipalType.ApiKey       => "badge-yellow",
+        _                                                  => "badge-dim"
+    };
+}

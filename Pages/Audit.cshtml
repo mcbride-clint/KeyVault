@@ -1,0 +1,51 @@
+@page
+@model KeyVaultService.Pages.AuditModel
+@{
+    ViewData["Title"]      = "Audit Log";
+    ViewData["ActivePage"] = "Audit";
+}
+
+<div class="card">
+    <div class="card-header"><span>Last 200 events</span></div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Action</th>
+                <th>Principal</th>
+                <th>Secret</th>
+                <th>Detail</th>
+                <th>IP</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var log in Model.Logs)
+            {
+                <tr>
+                    <td class="text-mono text-dim" style="font-size:12px;white-space:nowrap">
+                        @log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")
+                    </td>
+                    <td><span class="badge @BadgeClass(log.Action)">@log.Action</span></td>
+                    <td class="text-mono" style="font-size:12px">@log.Principal</td>
+                    <td class="text-dim" style="font-size:12px">@(log.Secret?.Name ?? "—")</td>
+                    <td class="text-dim" style="font-size:12px">@log.Detail</td>
+                    <td class="text-mono text-dim" style="font-size:12px">@log.IpAddress</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@functions {
+    string BadgeClass(string action) => action switch {
+        "READ"          => "badge-blue",
+        "CREATE"        => "badge-green",
+        "UPDATE"        => "badge-yellow",
+        "DELETE"        => "badge-red",
+        "GRANT"         => "badge-green",
+        "REVOKE"        => "badge-red",
+        "APIKEY_CREATE" => "badge-green",
+        "APIKEY_REVOKE" => "badge-red",
+        _               => "badge-dim"
+    };
+}

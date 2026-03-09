@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] – KeyVault</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+
+<div class="shell">
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <span class="brand-icon">⬡</span>
+            <span class="brand-text">KeyVault</span>
+        </div>
+
+        <ul class="nav-list">
+            <li><a asp-page="/Index"              class="nav-item @(ViewData["ActivePage"]?.ToString() == "Dashboard" ? "active" : "")">
+                <span class="nav-icon">◈</span> Dashboard
+            </a></li>
+            <li><a asp-page="/Secrets/Index"      class="nav-item @(ViewData["ActivePage"]?.ToString() == "Secrets" ? "active" : "")">
+                <span class="nav-icon">⬙</span> Secrets
+            </a></li>
+            <li><a asp-page="/Grants/Index"       class="nav-item @(ViewData["ActivePage"]?.ToString() == "Grants" ? "active" : "")">
+                <span class="nav-icon">◎</span> Access Grants
+            </a></li>
+            <li><a asp-page="/ApiKeys/Index"      class="nav-item @(ViewData["ActivePage"]?.ToString() == "ApiKeys" ? "active" : "")">
+                <span class="nav-icon">⌘</span> API Keys
+            </a></li>
+            <li><a asp-page="/Audit"              class="nav-item @(ViewData["ActivePage"]?.ToString() == "Audit" ? "active" : "")">
+                <span class="nav-icon">◷</span> Audit Log
+            </a></li>
+        </ul>
+
+        <div class="sidebar-footer">
+            <div class="user-chip">
+                <span class="user-dot"></span>
+                <span>@User.Identity?.Name</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main -->
+    <main class="main-area">
+        <header class="topbar">
+            <h1 class="page-title">@ViewData["Title"]</h1>
+            @if (TempData["Success"] != null)
+            {
+                <div class="toast toast--ok">@TempData["Success"]</div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="toast toast--err">@TempData["Error"]</div>
+            }
+        </header>
+
+        <div class="content">
+            @RenderBody()
+        </div>
+    </main>
+</div>
+
+<script src="~/js/site.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

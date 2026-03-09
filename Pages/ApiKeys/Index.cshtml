@@ -1,0 +1,86 @@
+@page
+@model KeyVaultService.Pages.ApiKeys.IndexModel
+@{
+    ViewData["Title"]      = "API Keys";
+    ViewData["ActivePage"] = "ApiKeys";
+}
+
+<div class="flex-row" style="margin-bottom:20px">
+    <p class="text-dim" style="font-size:13px">API keys allow non-Windows clients to authenticate. The key value is only shown once at creation.</p>
+    <div class="spacer"></div>
+    <button class="btn btn-primary" onclick="openModal('createModal')">+ New API Key</button>
+</div>
+
+@if (Model.NewKeyValue != null)
+{
+    <div class="card" style="border-color:var(--accent);margin-bottom:20px">
+        <div class="card-header" style="color:var(--accent)">New API Key Created – Save This Now</div>
+        <div style="padding:16px 20px">
+            <p class="text-dim" style="margin-bottom:10px;font-size:13px">This value will not be shown again.</p>
+            <div class="secret-reveal" style="display:block">@Model.NewKeyValue</div>
+        </div>
+    </div>
+}
+
+<div class="card">
+    <div class="card-header"><span>@Model.ApiKeys.Count() keys</span></div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Label</th>
+                <th>Created By</th>
+                <th>Created At</th>
+                <th>Last Used</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var k in Model.ApiKeys)
+            {
+                <tr>
+                    <td class="text-mono" style="font-weight:500">@k.Label</td>
+                    <td class="text-dim" style="font-size:12px">@k.CreatedBy</td>
+                    <td class="text-mono text-dim" style="font-size:12px">@k.CreatedAt.ToString("yyyy-MM-dd")</td>
+                    <td class="text-mono text-dim" style="font-size:12px">@(k.LastUsed?.ToString("yyyy-MM-dd HH:mm") ?? "Never")</td>
+                    <td>
+                        <span class="badge @(k.IsActive ? "badge-green" : "badge-dim")">
+                            @(k.IsActive ? "Active" : "Revoked")
+                        </span>
+                    </td>
+                    <td>
+                        @if (k.IsActive)
+                        {
+                            <form method="post" asp-page-handler="Revoke" style="display:inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@k.Id" />
+                                <button type="submit" class="btn btn-danger btn-sm"
+                                        onclick="return confirm('Revoke key: @k.Label?')">Revoke</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- Create Modal -->
+<div class="modal-overlay" id="createModal">
+    <div class="modal">
+        <div class="modal-title">New API Key</div>
+        <form method="post" asp-page-handler="Create">
+            @Html.AntiForgeryToken()
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Label *</label>
+                    <input name="label" class="form-control" placeholder="e.g. deploy-pipeline, reporting-service" required />
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('createModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Generate Key</button>
+            </div>
+        </form>
+    </div>
+</div>
