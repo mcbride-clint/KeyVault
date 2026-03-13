@@ -17,8 +17,14 @@ try
     builder.Host.UseSerilog((ctx, cfg) => cfg.ReadFrom.Configuration(ctx.Configuration));
 
     // ── Database ─────────────────────────────────────────────────────────────
+    var useInMemory = builder.Configuration.GetValue<bool>("UseInMemoryDatabase");
     builder.Services.AddDbContext<KeyVaultDbContext>(opts =>
-        opts.UseOracle(builder.Configuration.GetConnectionString("Oracle")));
+    {
+        if (useInMemory)
+            opts.UseInMemoryDatabase("KeyVaultDev");
+        else
+            opts.UseOracle(builder.Configuration.GetConnectionString("Oracle"));
+    });
 
     // ── Authentication ────────────────────────────────────────────────────────
     builder.Services.AddAuthentication(options =>
@@ -34,9 +40,17 @@ try
     // ── Authorization ─────────────────────────────────────────────────────────
     builder.Services.AddAuthorization(opts =>
     {
-        // Admins = members of the AD group named in config
-        var adminGroup = builder.Configuration["Authorization:AdminGroup"] ?? "KeyVaultAdmins";
-        opts.AddPolicy("AdminOnly", p => p.RequireRole(adminGroup));
+        if (builder.Environment.IsDevelopment())
+        {
+            // Any authenticated Windows user is treated as admin locally
+            opts.AddPolicy("AdminOnly", p => p.RequireAuthenticatedUser());
+        }
+        else
+        {
+            // Admins = members of the AD group named in config
+            var adminGroup = builder.Configuration["Authorization:AdminGroup"] ?? "KeyVaultAdmins";
+            opts.AddPolicy("AdminOnly", p => p.RequireRole(adminGroup));
+        }
     });
 
     // ── Application services ──────────────────────────────────────────────────

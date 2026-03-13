@@ -9,7 +9,7 @@ using KeyVaultService.Services;
 
 namespace KeyVaultService.Pages.Secrets;
 
-[Authorize(Roles = "KeyVaultAdmins")]
+[Authorize(Policy = "AdminOnly")]
 public class IndexModel : PageModel
 {
     private readonly ISecretsService _secrets;

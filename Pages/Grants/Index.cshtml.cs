@@ -9,7 +9,7 @@ using KeyVaultService.Services;
 
 namespace KeyVaultService.Pages.Grants;
 
-[Authorize(Roles = "KeyVaultAdmins")]
+[Authorize(Policy = "AdminOnly")]
 public class IndexModel : PageModel
 {
     private readonly IGrantsService _grants;

@@ -5,7 +5,7 @@ using KeyVaultService.Services;
 
 namespace KeyVaultService.Pages;
 
-[Authorize(Roles = "KeyVaultAdmins")]
+[Authorize(Policy = "AdminOnly")]
 public class AuditModel : PageModel
 {
     private readonly IAuditService _audit;

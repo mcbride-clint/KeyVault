@@ -7,7 +7,7 @@ using KeyVaultService.Services;
 
 namespace KeyVaultService.Pages;
 
-[Authorize(Roles = "KeyVaultAdmins")]
+[Authorize(Policy = "AdminOnly")]
 public class IndexModel : PageModel
 {
     private readonly KeyVaultDbContext _db;

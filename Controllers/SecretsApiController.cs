@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using KeyVaultService.Middleware;
 using KeyVaultService.Models;
 using KeyVaultService.Services;
+using Microsoft.Extensions.Hosting;
 
 namespace KeyVaultService.Controllers;
 
@@ -14,12 +15,14 @@ public class SecretsController : ControllerBase
     private readonly ISecretsService _secrets;
     private readonly IGrantsService  _grants;
     private readonly IAuditService   _audit;
+    private readonly IWebHostEnvironment _env;
 
-    public SecretsController(ISecretsService secrets, IGrantsService grants, IAuditService audit)
+    public SecretsController(ISecretsService secrets, IGrantsService grants, IAuditService audit, IWebHostEnvironment env)
     {
         _secrets = secrets;
         _grants  = grants;
         _audit   = audit;
+        _env     = env;
     }
 
     // GET /api/secrets/{name}  — retrieve the decrypted value
@@ -37,8 +40,8 @@ public class SecretsController : ControllerBase
                              .Select(c => c.Value)
                              .ToList();
 
-        // Admins bypass grant check
-        bool isAdmin = User.IsInRole("KeyVaultAdmins");
+        // Admins bypass grant check; in Development any authenticated user is treated as admin
+        bool isAdmin = _env.IsDevelopment() || User.IsInRole("KeyVaultAdmins");
         if (!isAdmin)
         {
             var hasAccess = await _secrets.PrincipalHasReadAccessAsync(secret.Id, principal, groups, isApiKey);
@@ -51,7 +54,7 @@ public class SecretsController : ControllerBase
 
     // GET /api/secrets — list metadata (no values)
     [HttpGet]
-    [Authorize(Roles = "KeyVaultAdmins")]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> List()
     {
         var all = await _secrets.ListAsync();
