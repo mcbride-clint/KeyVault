@@ -54,7 +54,11 @@ try
     });
 
     // ── Application services ──────────────────────────────────────────────────
-    builder.Services.AddScoped<IEncryptionService, DpapiAesEncryptionService>();
+    var encryptionMode = builder.Configuration["Encryption:Mode"];
+    if (string.Equals(encryptionMode, "AesKeyWrap", StringComparison.OrdinalIgnoreCase))
+        builder.Services.AddScoped<IEncryptionService, AesKeyWrapEncryptionService>();
+    else
+        builder.Services.AddScoped<IEncryptionService, DpapiAesEncryptionService>();
     builder.Services.AddScoped<IAuditService,      AuditService>();
     builder.Services.AddScoped<ISecretsService,    SecretsService>();
     builder.Services.AddScoped<IGrantsService,     GrantsService>();
